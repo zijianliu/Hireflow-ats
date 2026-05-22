@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  username    String    @unique
+  email       String    @unique
+  password    String
+  name        String
+  role        Role      @default(HR)
+  phone       String?
+  avatar      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  jobsOwner            Job[]                @relation("JobOwner")
+  jobsParticipant      Job[]                @relation("JobParticipants")
+  candidates           Candidate[]          @relation("CandidateOwner")
+  interviewsInterview  Interview[]          @relation("Interviewer")
+  offers               Offer[]
+  timelineEvents       TimelineEvent[]
+
+  @@map("users")
+}
+
+model Job {
+  id            String    @id @default(uuid())
+  title         String
+  department    String
+  location      String
+  headcount     Int
+  status        JobStatus @default(RECRUITING)
+  description   String
+  ownerId       String
+  owner         User      @relation("JobOwner", fields: [ownerId], references: [id])
+  participants  User[]    @relation("JobParticipants")
+  candidates    Candidate[]
+  interviews    Interview[]
+  offers        Offer[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([title])
+  @@index([department])
+  @@index([location])
+  @@index([status])
+  @@index([ownerId])
+  @@map("jobs")
+}
+
+model Candidate {
+  id             String          @id @default(uuid())
+  name           String
+  phone          String
+  email          String
+  resumeUrl      String?
+  source         CandidateSource
+  jobId          String
+  job            Job             @relation(fields: [jobId], references: [id])
+  stage          CandidateStage  @default(SCREENING)
+  ownerId        String
+  owner          User            @relation("CandidateOwner", fields: [ownerId], references: [id])
+  remark         String?
+  interviews     Interview[]
+  evaluations    InterviewEvaluation[]
+  timelineEvents TimelineEvent[]
+  offers         Offer[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([jobId, phone])
+  @@unique([jobId, email])
+  @@index([name])
+  @@index([phone])
+  @@index([email])
+  @@index([jobId])
+  @@index([stage])
+  @@index([source])
+  @@index([ownerId])
+  @@map("candidates")
+}
+
+model TimelineEvent {
+  id           String        @id @default(uuid())
+  candidateId  String
+  candidate    Candidate     @relation(fields: [candidateId], references: [id])
+  actionType   ActionType
+  fromStage    CandidateStage?
+  toStage      CandidateStage?
+  operatorId   String
+  operator     User          @relation(fields: [operatorId], references: [id])
+  description  String?
+  createdAt    DateTime      @default(now())
+
+  @@index([candidateId])
+  @@index([operatorId])
+  @@index([createdAt])
+  @@map("timeline_events")
+}
+
+model Interview {
+  id              String          @id @default(uuid())
+  candidateId     String
+  candidate       Candidate       @relation(fields: [candidateId], references: [id])
+  jobId           String
+  job             Job             @relation(fields: [jobId], references: [id])
+  round           InterviewRound
+  interviewerId   String
+  interviewer     User            @relation("Interviewer", fields: [interviewerId], references: [id])
+  startTime       DateTime
+  endTime         DateTime
+  method          InterviewMethod
+  location        String?
+  status          InterviewStatus @default(PENDING)
+  evaluation      InterviewEvaluation?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([interviewerId])
+  @@index([startTime])
+  @@index([status])
+  @@map("interviews")
+}
+
+model InterviewEvaluation {
+  id            String    @id @default(uuid())
+  interviewId   String    @unique
+  interview     Interview @relation(fields: [interviewId], references: [id])
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  score         Int
+  strengths     String
+  concerns      String
+  passed        Boolean
+  remark        String?
+  createdAt     DateTime  @default(now())
+
+  @@index([candidateId])
+  @@map("interview_evaluations")
+}
+
+model Offer {
+  id            String    @id @default(uuid())
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id])
+  jobId         String
+  job           Job       @relation(fields: [jobId], references: [id])
+  salaryRange   String
+  onboardDate   DateTime
+  status        OfferStatus @default(PENDING)
+  remark        String?
+  createdById   String
+  createdBy     User      @relation(fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([candidateId, jobId])
+  @@index([candidateId])
+  @@index([jobId])
+  @@index([status])
+  @@map("offers")
+}
+
+enum Role {
+  HR
+  INTERVIEWER
+  ADMIN
+}
+
+enum JobStatus {
+  RECRUITING
+  PAUSED
+  CLOSED
+}
+
+enum CandidateSource {
+  OFFICIAL
+  REFERRAL
+  HEADHUNTER
+  PLATFORM
+  EVENT
+  OTHER
+}
+
+enum CandidateStage {
+  SCREENING
+  HR_INTERVIEW
+  TECH_INTERVIEW
+  FINAL_INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+enum ActionType {
+  STAGE_CHANGE
+  INTERVIEW_SCHEDULED
+  INTERVIEW_CANCELLED
+  INTERVIEW_EVALUATED
+  OFFER_CREATED
+  OFFER_UPDATED
+}
+
+enum InterviewRound {
+  HR_INTERVIEW
+  TECH_INTERVIEW
+  FINAL_INTERVIEW
+}
+
+enum InterviewMethod {
+  ONLINE
+  OFFLINE
+  PHONE
+}
+
+enum InterviewStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
