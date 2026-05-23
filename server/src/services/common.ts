@@ -1,41 +1,30 @@
 import prisma from '../lib/prisma';
-import {
-  JobStatus,
-  CandidateStage,
-  CandidateSource,
-  InterviewRound,
-  InterviewMethod,
-  InterviewStatus,
-  OfferStatus,
-  ActionType,
-  Role
-} from '@prisma/client';
 
-const STAGE_TRANSITIONS: Record<CandidateStage, CandidateStage[]> = {
-  SCREENING: [CandidateStage.HR_INTERVIEW, CandidateStage.REJECTED],
-  HR_INTERVIEW: [CandidateStage.TECH_INTERVIEW, CandidateStage.REJECTED],
-  TECH_INTERVIEW: [CandidateStage.FINAL_INTERVIEW, CandidateStage.REJECTED],
-  FINAL_INTERVIEW: [CandidateStage.OFFER, CandidateStage.REJECTED],
-  OFFER: [CandidateStage.HIRED, CandidateStage.REJECTED],
+const STAGE_TRANSITIONS: Record<string, string[]> = {
+  SCREENING: ['HR_INTERVIEW', 'REJECTED'],
+  HR_INTERVIEW: ['TECH_INTERVIEW', 'REJECTED'],
+  TECH_INTERVIEW: ['FINAL_INTERVIEW', 'REJECTED'],
+  FINAL_INTERVIEW: ['OFFER', 'REJECTED'],
+  OFFER: ['HIRED', 'REJECTED'],
   HIRED: [],
   REJECTED: [],
 };
 
-export function canTransition(from: CandidateStage, to: CandidateStage): boolean {
+export function canTransition(from: string, to: string): boolean {
   return STAGE_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
-export function isTerminalStage(stage: CandidateStage): boolean {
-  return stage === CandidateStage.HIRED || stage === CandidateStage.REJECTED;
+export function isTerminalStage(stage: string): boolean {
+  return stage === 'HIRED' || stage === 'REJECTED';
 }
 
 export async function createTimelineEvent(
   candidateId: string,
-  actionType: ActionType,
+  actionType: string,
   operatorId: string,
   description?: string,
-  fromStage?: CandidateStage,
-  toStage?: CandidateStage
+  fromStage?: string,
+  toStage?: string
 ) {
   return prisma.timelineEvent.create({
     data: {
@@ -57,7 +46,7 @@ export async function hasTimeConflict(
   excludeInterviewId?: string
 ): Promise<{ hasConflict: boolean; conflictType?: string; conflictDetail?: string }> {
   const where: any = {
-    status: { not: InterviewStatus.CANCELLED },
+    status: { not: 'CANCELLED' },
     AND: [
       { startTime: { lt: endTime } },
       { endTime: { gt: startTime } },
@@ -97,8 +86,8 @@ export async function hasTimeConflict(
   return { hasConflict: false };
 }
 
-export async function canAccessJob(userId: string, userRole: Role, jobId: string): Promise<boolean> {
-  if (userRole === Role.ADMIN) return true;
+export async function canAccessJob(userId: string, userRole: string, jobId: string): Promise<boolean> {
+  if (userRole === 'ADMIN') return true;
 
   const job = await prisma.job.findUnique({
     where: { id: jobId },
@@ -107,15 +96,15 @@ export async function canAccessJob(userId: string, userRole: Role, jobId: string
 
   if (!job) return false;
 
-  if (userRole === Role.HR) {
+  if (userRole === 'HR') {
     return job.ownerId === userId || job.participants.some((p) => p.id === userId);
   }
 
   return false;
 }
 
-export async function canAccessCandidate(userId: string, userRole: Role, candidateId: string): Promise<boolean> {
-  if (userRole === Role.ADMIN) return true;
+export async function canAccessCandidate(userId: string, userRole: string, candidateId: string): Promise<boolean> {
+  if (userRole === 'ADMIN') return true;
 
   const candidate = await prisma.candidate.findUnique({
     where: { id: candidateId },
@@ -126,11 +115,11 @@ export async function canAccessCandidate(userId: string, userRole: Role, candida
 
   if (!candidate) return false;
 
-  if (userRole === Role.HR) {
+  if (userRole === 'HR') {
     return candidate.job.ownerId === userId || candidate.job.participants.some((p) => p.id === userId);
   }
 
-  if (userRole === Role.INTERVIEWER) {
+  if (userRole === 'INTERVIEWER') {
     const hasInterview = await prisma.interview.findFirst({
       where: {
         candidateId,
@@ -143,9 +132,9 @@ export async function canAccessCandidate(userId: string, userRole: Role, candida
   return false;
 }
 
-export function getAccessibleJobIds(userId: string, userRole: Role): { ownerId?: string; participants?: { some: { id: string } } } | {} {
-  if (userRole === Role.ADMIN) return {};
-  if (userRole === Role.HR) {
+export function getAccessibleJobIds(userId: string, userRole: string): any {
+  if (userRole === 'ADMIN') return {};
+  if (userRole === 'HR') {
     return {
       OR: [
         { ownerId: userId },

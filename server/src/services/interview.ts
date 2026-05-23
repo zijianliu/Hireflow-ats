@@ -1,24 +1,23 @@
 import prisma from '../lib/prisma';
-import { InterviewRound, InterviewMethod, InterviewStatus, Role, ActionType } from '@prisma/client';
 import { hasTimeConflict, createTimelineEvent, getAccessibleJobIds } from './common';
 
 export interface CreateInterviewData {
   candidateId: string;
   jobId: string;
-  round: InterviewRound;
+  round: string;
   interviewerId: string;
   startTime: Date;
   endTime: Date;
-  method: InterviewMethod;
+  method: string;
   location?: string;
 }
 
 export interface UpdateInterviewData {
-  round?: InterviewRound;
+  round?: string;
   interviewerId?: string;
   startTime?: Date;
   endTime?: Date;
-  method?: InterviewMethod;
+  method?: string;
   location?: string;
 }
 
@@ -26,7 +25,7 @@ export interface InterviewQueryParams {
   interviewerId?: string;
   candidateId?: string;
   jobId?: string;
-  status?: InterviewStatus;
+  status?: string;
   startTimeFrom?: Date;
   startTimeTo?: Date;
   page?: number;
@@ -71,7 +70,7 @@ export async function createInterview(data: CreateInterviewData, operatorId: str
     await tx.timelineEvent.create({
       data: {
         candidateId: data.candidateId,
-        actionType: ActionType.INTERVIEW_SCHEDULED,
+        actionType: 'INTERVIEW_SCHEDULED',
         operatorId,
         description: `安排面试: ${data.round} - 面试官: ${interview.interviewer.name} - 时间: ${data.startTime.toLocaleString()}`,
       },
@@ -121,14 +120,14 @@ export async function cancelInterview(id: string, operatorId: string) {
   return prisma.$transaction(async (tx) => {
     const interview = await tx.interview.update({
       where: { id },
-      data: { status: InterviewStatus.CANCELLED },
+      data: { status: 'CANCELLED' },
       include: { candidate: { select: { id: true, name: true } } },
     });
 
     await tx.timelineEvent.create({
       data: {
         candidateId: interview.candidateId,
-        actionType: ActionType.INTERVIEW_CANCELLED,
+        actionType: 'INTERVIEW_CANCELLED',
         operatorId,
         description: `取消面试: ${interview.round}`,
       },
@@ -150,15 +149,15 @@ export async function getInterviewById(id: string) {
   });
 }
 
-export async function getInterviewList(params: InterviewQueryParams, userId: string, userRole: Role) {
+export async function getInterviewList(params: InterviewQueryParams, userId: string, userRole: string) {
   const { interviewerId, candidateId, jobId, status, startTimeFrom, startTimeTo, page = 1, pageSize = 10 } = params;
   const skip = (page - 1) * pageSize;
 
   const where: any = {};
 
-  if (userRole === Role.INTERVIEWER) {
+  if (userRole === 'INTERVIEWER') {
     where.interviewerId = userId;
-  } else if (userRole === Role.HR) {
+  } else if (userRole === 'HR') {
     const jobFilter = getAccessibleJobIds(userId, userRole);
     where.job = jobFilter as any;
   }

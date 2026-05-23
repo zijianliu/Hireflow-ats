@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma';
-import { InterviewStatus, ActionType, Role } from '@prisma/client';
 
 export interface CreateEvaluationData {
   interviewId: string;
@@ -36,7 +35,7 @@ export async function createEvaluation(data: CreateEvaluationData, evaluatorId: 
     throw new Error('同一场面试不能重复提交评价');
   }
 
-  if (interview.status === InterviewStatus.CANCELLED) {
+  if (interview.status === 'CANCELLED') {
     throw new Error('已取消的面试不能提交评价');
   }
 
@@ -55,13 +54,13 @@ export async function createEvaluation(data: CreateEvaluationData, evaluatorId: 
 
     await tx.interview.update({
       where: { id: data.interviewId },
-      data: { status: InterviewStatus.COMPLETED },
+      data: { status: 'COMPLETED' },
     });
 
     await tx.timelineEvent.create({
       data: {
         candidateId: interview.candidateId,
-        actionType: ActionType.INTERVIEW_EVALUATED,
+        actionType: 'INTERVIEW_EVALUATED',
         operatorId: evaluatorId,
         description: `面试评价: ${interview.round} - 评分: ${data.score} - ${data.passed ? '通过' : '不通过'}`,
       },
@@ -71,7 +70,7 @@ export async function createEvaluation(data: CreateEvaluationData, evaluatorId: 
   });
 }
 
-export async function getEvaluationByInterviewId(interviewId: string, userId: string, userRole: Role) {
+export async function getEvaluationByInterviewId(interviewId: string, userId: string, userRole: string) {
   const evaluation = await prisma.interviewEvaluation.findUnique({
     where: { interviewId },
     include: {
@@ -85,15 +84,15 @@ export async function getEvaluationByInterviewId(interviewId: string, userId: st
 
   if (!evaluation) return null;
 
-  if (userRole === Role.INTERVIEWER && evaluation.interview.interviewerId !== userId) {
+  if (userRole === 'INTERVIEWER' && evaluation.interview.interviewerId !== userId) {
     throw new Error('权限不足');
   }
 
   return evaluation;
 }
 
-export async function getEvaluationsByCandidateId(candidateId: string, userId: string, userRole: Role) {
-  if (userRole === Role.INTERVIEWER) {
+export async function getEvaluationsByCandidateId(candidateId: string, userId: string, userRole: string) {
+  if (userRole === 'INTERVIEWER') {
     return prisma.interviewEvaluation.findMany({
       where: {
         candidateId,

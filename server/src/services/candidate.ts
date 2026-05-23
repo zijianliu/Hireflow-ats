@@ -1,14 +1,12 @@
 import prisma from '../lib/prisma';
-import { CandidateSource, CandidateStage, Role } from '@prisma/client';
 import { canTransition, isTerminalStage, createTimelineEvent, getAccessibleJobIds } from './common';
-import { ActionType } from '@prisma/client';
 
 export interface CreateCandidateData {
   name: string;
   phone: string;
   email: string;
   resumeUrl?: string;
-  source: CandidateSource;
+  source: string;
   jobId: string;
   ownerId: string;
   remark?: string;
@@ -19,7 +17,7 @@ export interface UpdateCandidateData {
   phone?: string;
   email?: string;
   resumeUrl?: string;
-  source?: CandidateSource;
+  source?: string;
   remark?: string;
 }
 
@@ -28,8 +26,8 @@ export interface CandidateQueryParams {
   phone?: string;
   email?: string;
   jobId?: string;
-  stage?: CandidateStage;
-  source?: CandidateSource;
+  stage?: string;
+  source?: string;
   ownerId?: string;
   page?: number;
   pageSize?: number;
@@ -116,7 +114,7 @@ export async function getCandidateById(id: string) {
   });
 }
 
-export async function getCandidateList(params: CandidateQueryParams, userId: string, userRole: Role) {
+export async function getCandidateList(params: CandidateQueryParams, userId: string, userRole: string) {
   const { name, phone, email, jobId, stage, source, ownerId, page = 1, pageSize = 10 } = params;
   const skip = (page - 1) * pageSize;
 
@@ -151,7 +149,7 @@ export async function getCandidateList(params: CandidateQueryParams, userId: str
   return { list, total, page, pageSize };
 }
 
-export async function changeStage(candidateId: string, newStage: CandidateStage, operatorId: string, description?: string) {
+export async function changeStage(candidateId: string, newStage: string, operatorId: string, description?: string) {
   const candidate = await prisma.candidate.findUnique({ where: { id: candidateId } });
   if (!candidate) {
     throw new Error('候选人不存在');
@@ -174,7 +172,7 @@ export async function changeStage(candidateId: string, newStage: CandidateStage,
     await tx.timelineEvent.create({
       data: {
         candidateId,
-        actionType: ActionType.STAGE_CHANGE,
+        actionType: 'STAGE_CHANGE',
         fromStage: candidate.stage,
         toStage: newStage,
         operatorId,

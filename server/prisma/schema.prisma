@@ -3,17 +3,17 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id          String    @id @default(uuid())
+  id          String    @id @default(cuid())
   username    String    @unique
   email       String    @unique
   password    String
   name        String
-  role        Role      @default(HR)
+  role        String    @default("HR")
   phone       String?
   avatar      String?
   createdAt   DateTime  @default(now())
@@ -30,12 +30,12 @@ model User {
 }
 
 model Job {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   title         String
   department    String
   location      String
   headcount     Int
-  status        JobStatus @default(RECRUITING)
+  status        String    @default("RECRUITING")
   description   String
   ownerId       String
   owner         User      @relation("JobOwner", fields: [ownerId], references: [id])
@@ -55,15 +55,15 @@ model Job {
 }
 
 model Candidate {
-  id             String          @id @default(uuid())
+  id             String          @id @default(cuid())
   name           String
   phone          String
   email          String
   resumeUrl      String?
-  source         CandidateSource
+  source         String
   jobId          String
   job            Job             @relation(fields: [jobId], references: [id])
-  stage          CandidateStage  @default(SCREENING)
+  stage          String          @default("SCREENING")
   ownerId        String
   owner          User            @relation("CandidateOwner", fields: [ownerId], references: [id])
   remark         String?
@@ -87,12 +87,12 @@ model Candidate {
 }
 
 model TimelineEvent {
-  id           String        @id @default(uuid())
+  id           String        @id @default(cuid())
   candidateId  String
   candidate    Candidate     @relation(fields: [candidateId], references: [id])
-  actionType   ActionType
-  fromStage    CandidateStage?
-  toStage      CandidateStage?
+  actionType   String
+  fromStage    String?
+  toStage      String?
   operatorId   String
   operator     User          @relation(fields: [operatorId], references: [id])
   description  String?
@@ -105,19 +105,19 @@ model TimelineEvent {
 }
 
 model Interview {
-  id              String          @id @default(uuid())
+  id              String          @id @default(cuid())
   candidateId     String
   candidate       Candidate       @relation(fields: [candidateId], references: [id])
   jobId           String
   job             Job             @relation(fields: [jobId], references: [id])
-  round           InterviewRound
+  round           String
   interviewerId   String
   interviewer     User            @relation("Interviewer", fields: [interviewerId], references: [id])
   startTime       DateTime
   endTime         DateTime
-  method          InterviewMethod
+  method          String
   location        String?
-  status          InterviewStatus @default(PENDING)
+  status          String          @default("PENDING")
   evaluation      InterviewEvaluation?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -131,7 +131,7 @@ model Interview {
 }
 
 model InterviewEvaluation {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   interviewId   String    @unique
   interview     Interview @relation(fields: [interviewId], references: [id])
   candidateId   String
@@ -148,14 +148,14 @@ model InterviewEvaluation {
 }
 
 model Offer {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   candidateId   String
   candidate     Candidate @relation(fields: [candidateId], references: [id])
   jobId         String
   job           Job       @relation(fields: [jobId], references: [id])
   salaryRange   String
   onboardDate   DateTime
-  status        OfferStatus @default(PENDING)
+  status        String    @default("PENDING")
   remark        String?
   createdById   String
   createdBy     User      @relation(fields: [createdById], references: [id])
@@ -167,69 +167,4 @@ model Offer {
   @@index([jobId])
   @@index([status])
   @@map("offers")
-}
-
-enum Role {
-  HR
-  INTERVIEWER
-  ADMIN
-}
-
-enum JobStatus {
-  RECRUITING
-  PAUSED
-  CLOSED
-}
-
-enum CandidateSource {
-  OFFICIAL
-  REFERRAL
-  HEADHUNTER
-  PLATFORM
-  EVENT
-  OTHER
-}
-
-enum CandidateStage {
-  SCREENING
-  HR_INTERVIEW
-  TECH_INTERVIEW
-  FINAL_INTERVIEW
-  OFFER
-  HIRED
-  REJECTED
-}
-
-enum ActionType {
-  STAGE_CHANGE
-  INTERVIEW_SCHEDULED
-  INTERVIEW_CANCELLED
-  INTERVIEW_EVALUATED
-  OFFER_CREATED
-  OFFER_UPDATED
-}
-
-enum InterviewRound {
-  HR_INTERVIEW
-  TECH_INTERVIEW
-  FINAL_INTERVIEW
-}
-
-enum InterviewMethod {
-  ONLINE
-  OFFLINE
-  PHONE
-}
-
-enum InterviewStatus {
-  PENDING
-  COMPLETED
-  CANCELLED
-}
-
-enum OfferStatus {
-  PENDING
-  ACCEPTED
-  REJECTED
-  WITHDRAWN
 }

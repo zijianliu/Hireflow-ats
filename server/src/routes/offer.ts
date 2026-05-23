@@ -7,11 +7,10 @@ import {
   getOfferById,
   getOfferList,
 } from '../services/offer';
-import { Role } from '@prisma/client';
 
 const router = Router();
 
-router.post('/', requireRoles(Role.HR, Role.ADMIN), async (req: AuthRequest, res) => {
+router.post('/', requireRoles('HR', 'ADMIN'), async (req: AuthRequest, res) => {
   try {
     const data = req.body;
     if (data.onboardDate) {
@@ -24,7 +23,7 @@ router.post('/', requireRoles(Role.HR, Role.ADMIN), async (req: AuthRequest, res
   }
 });
 
-router.patch('/:id/status', requireRoles(Role.HR, Role.ADMIN), async (req: AuthRequest, res) => {
+router.patch('/:id/status', requireRoles('HR', 'ADMIN'), async (req: AuthRequest, res) => {
   try {
     const { status } = req.body;
     if (!status) {
@@ -58,7 +57,7 @@ router.get('/', async (req: AuthRequest, res) => {
       page: req.query.page ? parseInt(req.query.page as string) : undefined,
       pageSize: req.query.pageSize ? parseInt(req.query.pageSize as string) : undefined,
     };
-    const result = await getOfferList(params, req.user!.userId, req.user!.role as Role);
+    const result = await getOfferList(params, req.user!.userId, req.user!.role as string);
     res.json({ code: 0, data: result });
   } catch (err: any) {
     res.status(400).json({ code: 400, message: err.message });

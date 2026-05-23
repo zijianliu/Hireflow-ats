@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma';
-import { OfferStatus, CandidateStage, ActionType, Role } from '@prisma/client';
 import { getAccessibleJobIds } from './common';
 
 export interface CreateOfferData {
@@ -13,7 +12,7 @@ export interface CreateOfferData {
 export interface OfferQueryParams {
   candidateId?: string;
   jobId?: string;
-  status?: OfferStatus;
+  status?: string;
   page?: number;
   pageSize?: number;
 }
@@ -27,7 +26,7 @@ export async function createOffer(data: CreateOfferData, operatorId: string) {
     throw new Error('候选人不存在');
   }
 
-  if (candidate.stage !== CandidateStage.OFFER) {
+  if (candidate.stage !== 'OFFER') {
     throw new Error('只有当前阶段为Offer的候选人才能创建Offer');
   }
 
@@ -35,7 +34,7 @@ export async function createOffer(data: CreateOfferData, operatorId: string) {
     where: {
       candidateId: data.candidateId,
       jobId: data.jobId,
-      status: { in: [OfferStatus.PENDING, OfferStatus.ACCEPTED] },
+      status: { in: ['PENDING', 'ACCEPTED'] },
     },
   });
 
@@ -58,7 +57,7 @@ export async function createOffer(data: CreateOfferData, operatorId: string) {
     await tx.timelineEvent.create({
       data: {
         candidateId: data.candidateId,
-        actionType: ActionType.OFFER_CREATED,
+        actionType: 'OFFER_CREATED',
         operatorId,
         description: `创建Offer: 薪资范围 ${data.salaryRange}, 入职日期 ${data.onboardDate.toLocaleDateString()}`,
       },
@@ -68,7 +67,7 @@ export async function createOffer(data: CreateOfferData, operatorId: string) {
   });
 }
 
-export async function updateOfferStatus(id: string, status: OfferStatus, operatorId: string) {
+export async function updateOfferStatus(id: string, status: string, operatorId: string) {
   const offer = await prisma.offer.findUnique({ where: { id } });
   if (!offer) {
     throw new Error('Offer不存在');
@@ -83,7 +82,7 @@ export async function updateOfferStatus(id: string, status: OfferStatus, operato
     await tx.timelineEvent.create({
       data: {
         candidateId: offer.candidateId,
-        actionType: ActionType.OFFER_UPDATED,
+        actionType: 'OFFER_UPDATED',
         operatorId,
         description: `Offer状态变更: ${offer.status} -> ${status}`,
       },
@@ -104,13 +103,13 @@ export async function getOfferById(id: string) {
   });
 }
 
-export async function getOfferList(params: OfferQueryParams, userId: string, userRole: Role) {
+export async function getOfferList(params: OfferQueryParams, userId: string, userRole: string) {
   const { candidateId, jobId, status, page = 1, pageSize = 10 } = params;
   const skip = (page - 1) * pageSize;
 
   const where: any = {};
 
-  if (userRole === Role.HR) {
+  if (userRole === 'HR') {
     const jobFilter = getAccessibleJobIds(userId, userRole);
     where.job = jobFilter as any;
   }

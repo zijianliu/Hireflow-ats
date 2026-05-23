@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma';
-import { JobStatus, Role } from '@prisma/client';
 import { getAccessibleJobIds } from './common';
 
 export interface CreateJobData {
@@ -25,7 +24,7 @@ export interface JobQueryParams {
   title?: string;
   department?: string;
   location?: string;
-  status?: JobStatus;
+  status?: string;
   ownerId?: string;
   page?: number;
   pageSize?: number;
@@ -80,21 +79,21 @@ export async function updateJob(id: string, data: UpdateJobData) {
 export async function closeJob(id: string) {
   return prisma.job.update({
     where: { id },
-    data: { status: JobStatus.CLOSED },
+    data: { status: 'CLOSED' },
   });
 }
 
 export async function reopenJob(id: string) {
   return prisma.job.update({
     where: { id },
-    data: { status: JobStatus.RECRUITING },
+    data: { status: 'RECRUITING' },
   });
 }
 
 export async function pauseJob(id: string) {
   return prisma.job.update({
     where: { id },
-    data: { status: JobStatus.PAUSED },
+    data: { status: 'PAUSED' },
   });
 }
 
@@ -109,7 +108,7 @@ export async function getJobById(id: string) {
   });
 }
 
-export async function getJobList(params: JobQueryParams, userId: string, userRole: Role) {
+export async function getJobList(params: JobQueryParams, userId: string, userRole: string) {
   const { title, department, location, status, ownerId, page = 1, pageSize = 10 } = params;
   const skip = (page - 1) * pageSize;
 

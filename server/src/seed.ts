@@ -1,4 +1,4 @@
-import { PrismaClient, Role, JobStatus, CandidateSource, CandidateStage } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { hashPassword } from './lib/auth';
 
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ async function main() {
       email: 'admin@hireflow.com',
       password: hashedPassword,
       name: '系统管理员',
-      role: Role.ADMIN,
+      role: 'ADMIN',
       phone: '13800000000',
     },
   });
@@ -27,7 +27,7 @@ async function main() {
       email: 'hr001@hireflow.com',
       password: hashedPassword,
       name: '张HR',
-      role: Role.HR,
+      role: 'HR',
       phone: '13800000001',
     },
   });
@@ -40,7 +40,7 @@ async function main() {
       email: 'hr002@hireflow.com',
       password: hashedPassword,
       name: '李HR',
-      role: Role.HR,
+      role: 'HR',
       phone: '13800000002',
     },
   });
@@ -53,7 +53,7 @@ async function main() {
       email: 'tech001@hireflow.com',
       password: hashedPassword,
       name: '王技术',
-      role: Role.INTERVIEWER,
+      role: 'INTERVIEWER',
       phone: '13800000003',
     },
   });
@@ -66,7 +66,7 @@ async function main() {
       email: 'tech002@hireflow.com',
       password: hashedPassword,
       name: '赵技术',
-      role: Role.INTERVIEWER,
+      role: 'INTERVIEWER',
       phone: '13800000004',
     },
   });
@@ -80,7 +80,7 @@ async function main() {
       department: '技术部',
       location: '北京',
       headcount: 3,
-      status: JobStatus.RECRUITING,
+      status: 'RECRUITING',
       description: '负责公司核心产品的前端开发工作，要求3年以上React经验。',
       ownerId: hr1.id,
       participants: {
@@ -98,7 +98,7 @@ async function main() {
       department: '技术部',
       location: '上海',
       headcount: 2,
-      status: JobStatus.RECRUITING,
+      status: 'RECRUITING',
       description: '负责公司后端服务开发，熟悉Node.js或Java。',
       ownerId: hr2.id,
     },
@@ -113,7 +113,7 @@ async function main() {
       department: '质量部',
       location: '深圳',
       headcount: 1,
-      status: JobStatus.CLOSED,
+      status: 'CLOSED',
       description: '该职位已关闭。',
       ownerId: hr1.id,
     },
@@ -128,9 +128,9 @@ async function main() {
       phone: '13900000001',
       email: 'zhangsan@example.com',
       resumeUrl: 'https://example.com/resume/zhangsan.pdf',
-      source: CandidateSource.PLATFORM,
+      source: 'PLATFORM',
       jobId: job1.id,
-      stage: CandidateStage.SCREENING,
+      stage: 'SCREENING',
       ownerId: hr1.id,
       remark: '5年前端经验，React技术栈熟练。',
     },
@@ -145,9 +145,9 @@ async function main() {
       phone: '13900000002',
       email: 'lisi@example.com',
       resumeUrl: 'https://example.com/resume/lisi.pdf',
-      source: CandidateSource.REFERRAL,
+      source: 'REFERRAL',
       jobId: job1.id,
-      stage: CandidateStage.TECH_INTERVIEW,
+      stage: 'TECH_INTERVIEW',
       ownerId: hr1.id,
       remark: '3年经验，能力不错。',
     },

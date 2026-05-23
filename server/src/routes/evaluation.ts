@@ -5,7 +5,6 @@ import {
   getEvaluationByInterviewId,
   getEvaluationsByCandidateId,
 } from '../services/evaluation';
-import { Role } from '@prisma/client';
 
 const router = Router();
 
@@ -24,7 +23,7 @@ router.get('/interview/:interviewId', async (req: AuthRequest, res) => {
     const evaluation = await getEvaluationByInterviewId(
       req.params.interviewId,
       req.user!.userId,
-      req.user!.role as Role
+      req.user!.role as string
     );
     res.json({ code: 0, data: evaluation });
   } catch (err: any) {
@@ -37,7 +36,7 @@ router.get('/candidate/:candidateId', async (req: AuthRequest, res) => {
     const evaluations = await getEvaluationsByCandidateId(
       req.params.candidateId,
       req.user!.userId,
-      req.user!.role as Role
+      req.user!.role as string
     );
     res.json({ code: 0, data: evaluations });
   } catch (err: any) {

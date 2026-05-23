@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma';
-import { JobStatus, CandidateStage, Role } from '@prisma/client';
 import { getAccessibleJobIds } from './common';
 
 export interface DashboardQueryParams {
@@ -9,7 +8,7 @@ export interface DashboardQueryParams {
   endDate?: Date;
 }
 
-export async function getDashboardStats(params: DashboardQueryParams, userId: string, userRole: Role) {
+export async function getDashboardStats(params: DashboardQueryParams, userId: string, userRole: string) {
   const { jobId, department, startDate, endDate } = params;
 
   const jobFilter = getAccessibleJobIds(userId, userRole);
@@ -34,7 +33,7 @@ export async function getDashboardStats(params: DashboardQueryParams, userId: st
     sourcePassRate,
   ] = await Promise.all([
     prisma.job.count({
-      where: { ...jobWhere, status: JobStatus.RECRUITING },
+      where: { ...jobWhere, status: 'RECRUITING' },
     }),
 
     prisma.candidate.count({
@@ -70,14 +69,14 @@ export async function getDashboardStats(params: DashboardQueryParams, userId: st
     prisma.candidate.count({
       where: {
         job: jobWhere as any,
-        stage: CandidateStage.HIRED,
+        stage: 'HIRED',
       },
     }),
 
     prisma.candidate.count({
       where: {
         job: jobWhere as any,
-        stage: CandidateStage.REJECTED,
+        stage: 'REJECTED',
       },
     }),
 
@@ -129,7 +128,7 @@ async function getSourcePassRate(jobWhere: any, startDate?: Date, endDate?: Date
       sourceStats[c.source] = { total: 0, passed: 0 };
     }
     sourceStats[c.source].total++;
-    if (c.stage === CandidateStage.HIRED || c.stage === CandidateStage.OFFER) {
+    if (c.stage === 'HIRED' || c.stage === 'OFFER') {
       sourceStats[c.source].passed++;
     }
   });
