@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ConfigProvider, App as AntdApp } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useAuthStore } from './store/auth';
@@ -30,6 +30,21 @@ const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
   return <>{children}</>;
 };
 
+const DefaultRedirect: React.FC = () => {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (user?.role === 'INTERVIEWER') {
+      navigate('/interviews', { replace: true });
+    } else {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
+  return null;
+};
+
 const App: React.FC = () => {
   return (
     <ConfigProvider locale={zhCN}>
@@ -45,7 +60,7 @@ const App: React.FC = () => {
                 </PrivateRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<DefaultRedirect />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="jobs" element={<JobList />} />
               <Route path="jobs/new" element={<JobForm />} />

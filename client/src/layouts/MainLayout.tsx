@@ -5,21 +5,16 @@ import {
   TeamOutlined,
   UserOutlined,
   ScheduleOutlined,
-  FileTextOutlined,
   GiftOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 import { ROLE_LABELS } from '../types';
 
 const { Header, Sider, Content } = Layout;
 
-interface MainLayoutProps {
-  children?: React.ReactNode;
-}
-
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
@@ -104,7 +99,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </Dropdown>
         </Header>
         <Content style={{ margin: 16, background: '#fff', padding: 24, minHeight: 280, borderRadius: 8 }}>
-          {children}
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest, authMiddleware } from '../middleware/auth';
 import { login, getCurrentUser, getUserList } from '../services/auth';
 
 const router = Router();
@@ -17,7 +17,7 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/me', async (req: AuthRequest, res: Response) => {
+router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await getCurrentUser(req.user!.userId);
     if (!user) {
@@ -29,7 +29,7 @@ router.get('/me', async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get('/users', async (req: AuthRequest, res: Response) => {
+router.get('/users', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const users = await getUserList();
     res.json({ code: 0, data: users });

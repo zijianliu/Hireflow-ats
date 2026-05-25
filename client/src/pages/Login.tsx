@@ -19,7 +19,11 @@ const Login: React.FC = () => {
       setToken(token);
       setUser(user as User);
       message.success('登录成功');
-      navigate('/');
+      if (user.role === 'INTERVIEWER') {
+        navigate('/interviews');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       message.error(err.message || '登录失败');
     } finally {
